@@ -1,4 +1,5 @@
 <?php
+ob_start();
 require_once __DIR__ . '/includes/auth_check.php';
 require_once __DIR__ . '/includes/header.php';
 
@@ -46,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $db->commit();
         $_SESSION['success'] = $message;
+        ob_end_clean(); // Clean the output buffer
         header("Location: po_list.php");
         exit();
     } catch (Exception $e) {

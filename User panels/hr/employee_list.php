@@ -14,14 +14,22 @@ if ($role !== 'hr') {
     exit();
 }
 
+// Get departments for the edit modal
+$departments = $db->query("SELECT department_id, department_name FROM department ORDER BY department_name")->fetchAll();
+
 // Filters
 $allowedFilters = ['all', 'active', 'inactive', 'unassigned'];
 $filter = isset($_GET['filter']) && in_array($_GET['filter'], $allowedFilters) ? $_GET['filter'] : 'all';
 $search = $_GET['search'] ?? '';
 
-// Build SQL query
+// Build SQL query - Modified to avoid duplicates
 $query = "
-SELECT e.*, d.department_name, r.role_type, u.username, u.user_id ,u.password
+SELECT 
+    e.*, 
+    d.department_name, 
+    GROUP_CONCAT(DISTINCT r.role_type) as roles,
+    u.username, 
+    u.user_id
 FROM employee e
 LEFT JOIN department d ON e.department_id = d.department_id
 LEFT JOIN roles r ON e.id = r.employee_id
@@ -37,21 +45,18 @@ if ($filter === 'active') {
     $query .= " AND e.department_id IS NULL";
 }
 
-
+$params = [];
 if (!empty($search)) {
     $query .= " AND (e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)";
     $params = array_fill(0, 3, "%$search%");
 }
 
-    $params=[
-
-    ];
-
+$query .= " GROUP BY e.id"; // This is the key change to prevent duplicates
 $query .= " ORDER BY e.last_name, e.first_name";
+
 $employees = $db->prepare($query);
 $employees->execute($params);
 $employees = $employees->fetchAll();
-
 ?>
 
 <div class="container-fluid">
@@ -236,6 +241,7 @@ $employees = $employees->fetchAll();
                             <label class="form-label">New Password (leave blank to keep current)</label>
                             <input type="password" class="form-control" name="password">
                         </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">

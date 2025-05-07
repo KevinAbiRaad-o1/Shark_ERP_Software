@@ -16,9 +16,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $db->beginTransaction();
 
-        // First, insert into employee table
+        // Check for duplicate email first
+        $stmt = $db->prepare("SELECT COUNT(*) FROM employee WHERE email = ?");
+        $stmt->execute([$_POST['email']]);
+        if ($stmt->fetchColumn() > 0) {
+            throw new PDOException("Email already exists", 23000);
+        }
+
+        // Check for duplicate username
+        $stmt = $db->prepare("SELECT COUNT(*) FROM users WHERE username = ?");
+        $stmt->execute([$_POST['username']]);
+        if ($stmt->fetchColumn() > 0) {
+            throw new PDOException("Username already exists", 23000);
+        }
+
+        // Generate a new person_id
+        $stmt = $db->query("SELECT IFNULL(MAX(person_id), 0) + 1 FROM employee");
+        $personId = $stmt->fetchColumn();
+
+        // Insert into employee table
         $stmt = $db->prepare("
             INSERT INTO employee (
+                person_id,
                 first_name, 
                 last_name, 
                 email, 
@@ -28,10 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 hire_date, 
                 department_id, 
                 is_active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $stmt->execute([
+            $personId,
             $_POST['first_name'],
             $_POST['last_name'],
             $_POST['email'],
@@ -44,10 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         
         $employeeId = $db->lastInsertId();
-        $personId = $employeeId;
         
         // Hash the password
-        $hashedPassword =$_POST['password'];
+        $hashedPassword = $_POST['password'];
         
         // Insert into users table
         $stmt = $db->prepare("
@@ -84,19 +103,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (PDOException $e) {
         $db->rollBack();
         
-        // Check for duplicate entry error
-        if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
-            if (strpos($e->getMessage(), 'email') !== false) {
-                $_SESSION['error_message'] = "Email already exists in the system.";
-            } elseif (strpos($e->getMessage(), 'username') !== false) {
-                $_SESSION['error_message'] = "Username already exists in the system.";
-            } else {
-                $_SESSION['error_message'] = "Duplicate entry error occurred.";
+        $errorMessage = "Error adding employee: ";
+        
+        // Handle specific error cases
+        if ($e->getCode() == 23000) { // Integrity constraint violation
+            if (strpos($e->getMessage(), 'email') !== false || $e->getMessage() === "Email already exists") {
+                $errorMessage = "The email address is already registered in our system.";
+            } 
+            elseif (strpos($e->getMessage(), 'username') !== false || $e->getMessage() === "Username already exists") {
+                $errorMessage = "The username is already taken. Please choose another one.";
+            }
+            elseif (strpos($e->getMessage(), 'person_id') !== false) {
+                $errorMessage = "A system error occurred (duplicate ID). Please try again.";
+            }
+            else {
+                $errorMessage = "A duplicate entry error occurred. Please check your input.";
             }
         } else {
-            $_SESSION['error_message'] = "Error adding employee: " . $e->getMessage();
+            $errorMessage .= $e->getMessage();
         }
         
+        $_SESSION['error_message'] = $errorMessage;
+        $_SESSION['form_data'] = $_POST; // Preserve form input
         header("Location: add_employee.php");
         exit();
     }

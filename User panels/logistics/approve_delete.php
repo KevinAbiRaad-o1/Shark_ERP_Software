@@ -1,4 +1,5 @@
 <?php
+ob_start();
 require_once __DIR__ . '/includes/auth_check.php';
 require_once __DIR__ . '/includes/header.php';
 
@@ -102,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->rollBack();
         $_SESSION['error_message'] = $e->getMessage();
     }
-
+    ob_end_clean(); // Clean the output buffer
     sleep(1); // Added delay before redirect
     header("Location: approve_delete.php");
     exit();

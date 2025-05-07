@@ -1,5 +1,6 @@
 <?php
 // Shark-erp/User panels/warehouse/add_item.php
+ob_start(); // Add this line
 require_once __DIR__ . '/includes/auth_check.php';
 require_once __DIR__ . '/includes/header.php';
 
@@ -33,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['location_id'],
             $_POST['initial_quantity'] ?? 0
         ]);
-
+        ob_end_clean(); // Clean the output buffer
         $_SESSION['success'] = "Item added successfully!";
         header("Location: view_items.php");
         exit();

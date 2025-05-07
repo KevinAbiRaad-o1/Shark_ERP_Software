@@ -5,7 +5,7 @@
     "user": "root",
     "pass": ""
   },
-  "categories": ["one", "two"],
+  "categories": ["one", "two", "three", "four"],
   "locations": ["first", "second"],
   "departments": ["1", "2"],
   "suppliers": [

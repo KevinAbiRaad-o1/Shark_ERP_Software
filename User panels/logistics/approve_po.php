@@ -1,4 +1,5 @@
 <?php
+ob_start(); // Add this line
 require_once __DIR__ . '/includes/auth_check.php';
 require_once __DIR__ . '/includes/header.php';
 
@@ -55,10 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
         
-        $db->commit();
-        $_SESSION['success'] = "PO #{$_POST['po_number']} has been " . $newStatus;
-        header("Location: approve_po.php");
-        exit();
+     $db->commit();
+$_SESSION['success'] = "PO #{$_POST['po_number']} has been " . $newStatus;
+ob_end_clean(); // Clean the output buffer
+header("Location: approve_po.php");
+exit();
     } catch (Exception $e) {
         $db->rollBack();
         $_SESSION['error'] = $e->getMessage();

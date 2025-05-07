@@ -1,7 +1,7 @@
 <?php
+ob_start(); 
 require_once __DIR__ . '/includes/auth_check.php';
-require_once __DIR__ . '/includes/header.php';
-
+require_once __DIR__ . '/includes/header.php'; 
 $db = DatabaseConnection::getInstance();
 
 // Search functionality
@@ -73,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         $db->commit();
+        ob_end_clean(); // Clean the output buffer
         header("Location: edit_item.php");
         exit();
         
