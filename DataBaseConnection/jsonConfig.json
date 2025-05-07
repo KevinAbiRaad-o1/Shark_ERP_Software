@@ -1,0 +1,34 @@
+{
+  "database": {
+    "host": "localhost",
+    "name": "erp-database",
+    "user": "root",
+    "pass": ""
+  },
+  "categories": ["one", "two"],
+  "locations": ["first", "second"],
+  "departments": ["1", "2"],
+  "suppliers": [
+    {
+      "name": "Supplier One",
+      "code": "SUP001",
+      "contact": "John Doe",
+      "email": "john@supplier.com",
+      "phone": "1234567890"
+    },
+    {
+      "name": "Supplier Two",
+      "code": "SUP002",
+      "contact": "Jane Smith",
+      "email": "jane.different@supplier.com",
+      "phone": "0987654321"
+    },
+    {
+      "name": "Supplier three",
+      "code": "SUP003",
+      "contact": "Jane",
+      "email": "jane@supplier.com",
+      "phone": "098765432"
+    }
+  ]
+}
