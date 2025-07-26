@@ -1,0 +1,202 @@
+Table category {
+  id int [pk, increment]
+  name varchar(50) [not null]
+  description text
+}
+
+Table department {
+  department_id int [pk, increment]
+  department_name varchar(25) [not null, unique]
+}
+
+Table employee {
+  id int [pk, increment]
+  person_id int [not null, unique]
+  first_name varchar(25) [not null]
+  last_name varchar(25) [not null]
+  email varchar(50) [not null, unique]
+  phone varchar(20)
+  address_line varchar(100)
+  city varchar(50)
+  hire_date date [not null]
+  department_id int
+  is_active tinyint [default: 1]
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+  deleted_at datetime
+}
+
+Table employee_role_role_type_enum {
+  value enum('owner','hr','accounting','warehouse','logistics') [pk]
+}
+
+Table inventory {
+  id int [pk, increment]
+  item_id int [not null]
+  location_id int [not null]
+  quantity int [default: 0]
+  last_updated datetime [default: `now()`]
+}
+
+Table item {
+  id int [pk, increment]
+  sku varchar(25) [not null, unique]
+  category_id int [not null]
+  name varchar(100) [not null]
+  description text
+  weight decimal(10,2)
+  weight_unit varchar(5) [default: 'kg']
+  dimensions varchar(20)
+  color varchar(20)
+  min_stock_level int
+  max_stock_level int
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+  is_active tinyint [default: 1]
+}
+
+Table item_deletion_log {
+  id int [pk, increment]
+  item_id int [not null]
+  action enum('approved','rejected') [not null]
+  user_id int [not null]
+  reason text
+  created_at datetime [default: `now()`]
+}
+
+Table location {
+  id int [pk, increment]
+  warehouse_id int [not null]
+  name varchar(50) [not null]
+}
+
+Table login_history {
+  id int [pk, increment]
+  user_id int [not null]
+  login_time datetime [not null]
+  ip_address varchar(45) [not null]
+  user_agent text
+  success tinyint [not null]
+}
+
+Table logistics_po_approval {
+  id int [pk, increment]
+  warehouse_request_id int [not null]
+  supplier_id int [not null]
+  payment_terms varchar(20) [not null]
+  shipping_method varchar(20) [not null]
+  approved_by int [not null]
+  approved_at datetime [default: `now()`]
+}
+
+Table purchase_order_item {
+  id int [pk, increment]
+  po_id int [not null]
+  item_id int [not null]
+  quantity int [not null]
+  received_quantity int [default: 0]
+}
+
+Table purchase_order_status_enum {
+  value enum('draft','approved','sent','received','cancelled') [pk]
+}
+
+Table purchase_order_status_history {
+  id int [pk, increment]
+  po_id int [not null]
+  status enum('draft','approved','sent','received','cancelled') [not null]
+  changed_by int [not null]
+  changed_at datetime [default: `now()`]
+  notes text
+}
+
+Table roles {
+  id int [pk, increment]
+  employee_id int [not null]
+  role_type enum('owner','hr','accounting','warehouse','logistics') [not null]
+}
+
+Table supplier {
+  id int [pk, increment]
+  supplier_code varchar(20) [not null, unique]
+  name varchar(100) [not null]
+  contact_person varchar(100)
+  email varchar(100) [not null, unique]
+  phone varchar(20) [not null]
+  address_line1 varchar(100) [not null]
+  address_line2 varchar(100)
+  city varchar(50) [not null]
+  state varchar(50) [not null]
+  postal_code varchar(20) [not null]
+  country varchar(50) [default: 'Lebanon']
+  tax_id varchar(50)
+  payment_terms enum('NET30','NET60','Upon Delivery','Advance Payment') [default: 'NET30']
+  lead_time_days int [default: 7]
+  is_active tinyint [default: 1]
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+}
+
+Table supplier_items {
+  id int [pk, increment]
+  supplier_id int [not null]
+  item_id int [not null]
+  supplier_sku varchar(50)
+  unit_price decimal(10,2) [not null]
+}
+
+Table users {
+  user_id int [pk, increment]
+  person_id int [not null]
+  username varchar(25) [not null, unique]
+  password varchar(100) [not null]
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+}
+
+Table warehouse_item_request {
+  id int [pk, increment]
+  po_number varchar(20) [not null, unique]
+  order_date datetime [default: `now()`]
+  expected_delivery_date date
+  status enum('draft','approved','sent','received','cancelled') [default: 'draft']
+  notes text
+  created_by int [not null]
+  supplier_id int
+  approved_by int
+  approved_at datetime
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+  payment_terms varchar(20) [default: 'NET30']
+  shipping_method varchar(20) [default: 'Ground']
+  is_deleted tinyint [default: 0]
+}
+
+Ref: employee.department_id > department.department_id [delete: set null, update: cascade]
+
+Ref: inventory.item_id > item.id
+Ref: inventory.location_id > location.id
+
+Ref: item.category_id > category.id
+
+Ref: item_deletion_log.user_id > users.user_id
+
+Ref: logistics_po_approval.warehouse_request_id > warehouse_item_request.id
+Ref: logistics_po_approval.supplier_id > supplier.id
+Ref: logistics_po_approval.approved_by > employee.id
+
+Ref: purchase_order_item.po_id > warehouse_item_request.id
+Ref: purchase_order_item.item_id > item.id
+
+Ref: purchase_order_status_history.po_id > warehouse_item_request.id
+
+Ref: roles.employee_id > employee.id
+
+Ref: supplier_items.supplier_id > supplier.id
+Ref: supplier_items.item_id > item.id
+
+Ref: users.person_id > employee.person_id
+
+Ref: warehouse_item_request.created_by > employee.id
+Ref: warehouse_item_request.approved_by > employee.id
+Ref: warehouse_item_request.supplier_id > supplier.id
